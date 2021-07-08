@@ -1,5 +1,8 @@
 # KMK: Clackety Keyboards Powered by Python
 
+Fork for my layout and ideas.
+![](https://user-images.githubusercontent.com/21249992/118560803-5aa34d00-b76a-11eb-88c8-6feb737be994.jpg =250x)
+
 KMK is a feature-rich and beginner-friendly firmware for computer keyboards
 written and configured in
 [CircuitPython](https://github.com/adafruit/circuitpython). **KMK is currently
