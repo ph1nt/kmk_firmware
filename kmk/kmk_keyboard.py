@@ -233,11 +233,9 @@ class KMKKeyboard:
                     self.remove_key(self._tap_side_effects[td_key])
                     self._tap_side_effects[td_key] = None
                     self.hid_pending = True
-                    self._cleanup_tap_dance(td_key)
                 else:
                     self.tap_key(td_key.codes[v])
-                    self._cleanup_tap_dance(td_key)
-
+                self._cleanup_tap_dance(td_key)
         return self
 
     def _cleanup_tap_dance(self, td_key):
