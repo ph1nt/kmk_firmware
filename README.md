@@ -1,4 +1,14 @@
 # KMK: Clackety Keyboards Powered by Python
+![GitHub](
+https://img.shields.io/github/license/KMKfw/kmk_firmware
+)![GitHub contributors](
+https://img.shields.io/github/contributors/KMKfw/kmk_firmware
+)![Discord](
+https://img.shields.io/discord/493256121075761173?logo=Discord
+)![Lines of code](https://img.shields.io/tokei/lines/github/KMKfw/kmk_firmware
+)![GitHub issues](https://img.shields.io/github/issues-raw/KMKfw/kmk_firmware
+)![GitHub closed issues](https://img.shields.io/github/issues-closed/KMKfw/kmk_firmware)
+
 
 Fork for my layout and ideas.
 ![](https://user-images.githubusercontent.com/21249992/118560803-5aa34d00-b76a-11eb-88c8-6feb737be994.jpg =250x)
