@@ -1,4 +1,5 @@
 import time
+
 # **************************************************************************
 # *                                                                        *
 # *     MicroPython high-level 'hid' module                                *
@@ -75,7 +76,7 @@ sendTime = -1
 
 def SetKeyCode(adr, s, mod=0, sub=0):
     if s.find("..") == 1:
-        for n in range(ord(s[0]), ord(s[-1])+1):
+        for n in range(ord(s[0]), ord(s[-1]) + 1):
             SetKeyCode(adr, chr(n), mod, sub)
             adr = adr + 1
     else:
@@ -100,6 +101,7 @@ def SetKeyCodes():
     SetKeyCode(0x23, chr(0x1E), MOD_LCTRL)  # Ctrl-^ RS
     SetKeyCode(0x2D, chr(0x1F), MOD_LCTRL)  # Ctrl-_ US
     SetKeyCode(0x34, chr(0x00), MOD_LCTRL)  # Ctrl-@ NUL
+
 
 # .-----------------------------------------------------------------------.
 # |     Define the names of non-ASCII keys                                |
@@ -147,6 +149,7 @@ def SetKeyNames():
     for n in range(12):  # Function keys F13 to F24
         SetKeyName(0x68 + n, "F" + str(13 + n))
 
+
 # .-----------------------------------------------------------------------.
 # |     Define the named modifiers which can be used                      |
 # `-----------------------------------------------------------------------'
@@ -170,6 +173,7 @@ def SetModNames():
     modNames["ALT-CTRL"] = MOD_LALT + MOD_LCTRL
     modNames["ALT-CTRL-SHIFT"] = MOD_LALT + MOD_LSHIFT + MOD_LCTRL
 
+
 # .-----------------------------------------------------------------------.
 # |     Send a single key press                                           |
 # `-----------------------------------------------------------------------'
@@ -183,7 +187,9 @@ def SendKey(k):
             if (modifier | (k >> 8)) == modNames[this]:
                 s = this
                 break
-        print("SendKey {} {} {}".format(Hex(modifier | (k >> 8), 2), s, Hex(k & 0xFF, 2)))
+        print(
+            "SendKey {} {} {}".format(Hex(modifier | (k >> 8), 2), s, Hex(k & 0xFF, 2))
+        )
     elif k != 0:
         if sendTime >= 0:
             while time.ticks_diff(time.ticks_ms(), sendTime) < 20:
@@ -193,6 +199,7 @@ def SendKey(k):
         _hid.keypress(0, 0)
         sendTime = time.ticks_ms()
 
+
 # .-----------------------------------------------------------------------.
 # |     Send the key representing a single ASCII character                |
 # `-----------------------------------------------------------------------'
@@ -200,6 +207,7 @@ def SendKey(k):
 
 def SendChar(c):
     SendKey(keyCodes[ord(c) & 0xFF])
+
 
 # .-----------------------------------------------------------------------.
 # |     Handle a single word sent                                         |
@@ -214,7 +222,9 @@ def SendWord(s):
         u = s.upper()
         if u in modNames:
             if DEBUG:
-                print("[1] {} is in modNames ({}) - Add modifier".format(u, modNames[u]))
+                print(
+                    "[1] {} is in modNames ({}) - Add modifier".format(u, modNames[u])
+                )
             modifier = modifier | modNames[u]
             return
         if u in keyNames:
@@ -224,7 +234,7 @@ def SendWord(s):
             return
         n = u.rfind("-")
         if n > 0:
-            mod, key = u[:n], u[n+1:]
+            mod, key = u[:n], u[n + 1 :]
             if DEBUG:
                 print("[3] {} might be split '{}' + '{}'".format(u, mod, key))
             if mod in modNames:
@@ -232,26 +242,39 @@ def SendWord(s):
                     print("[4] {} is in modNames ({})".format(mod, modNames[mod]))
                 if key in keyNames:
                     if DEBUG:
-                        print("[5] {} is in keyNames ({}) - Send as named key".format(key, keyNames[key]))
+                        print(
+                            "[5] {} is in keyNames ({}) - Send as named key".format(
+                                key, keyNames[key]
+                            )
+                        )
                     SendKey(keyNames[key] | (modNames[mod] << 8))
                     return
                 modifier = modNames[mod]
-                s = s[n+1:]
+                s = s[n + 1 :]
             if DEBUG:
-                print("[6] This is modifier {} ({}) plus non-key '{}'".format(mod, modNames[mod], s))
+                print(
+                    "[6] This is modifier {} ({}) plus non-key '{}'".format(
+                        mod, modNames[mod], s
+                    )
+                )
             if len(s) == 1 and s != s.lower():
                 if mod in ["CTRL", "ALT", "CTRL-ALT", "ALT-CTRL"]:
                     # We want to convert 'CTRL-A' etc to actually be 'CTRL-a' so we don't
                     # get a SHIFT with it. If one wants a 'CTRL-SHIFT' then specify that
                     # rather than just 'CTRL'.
                     if DEBUG:
-                        print("[7] Changing '{}-{}' to '{}-{}'".format(mod, s, mod, s.lower()))
+                        print(
+                            "[7] Changing '{}-{}' to '{}-{}'".format(
+                                mod, s, mod, s.lower()
+                            )
+                        )
                     s = s.lower()
     if DEBUG:
         print("[8] Send individual characters '{}'".format(s))
     for c in s:
         SendChar(c)
     modifier = MOD_NONE
+
 
 # .-----------------------------------------------------------------------.
 # |     Send a sequence of words                                          |
@@ -264,6 +287,7 @@ def Send(arg, *args):
     SendWord(arg)
     for arg in args:
         SendWord(arg)
+
 
 # .-----------------------------------------------------------------------.
 # |     Initialise the keyboard lookup tables                             |
@@ -286,9 +310,11 @@ def Move(up=0, down=0, left=0, right=0):
         if n > max:
             return max
         return n
+
     up = Limit(127, up - down)
     right = Limit(127, right - left)
     _hid.move(up, right)
+
 
 # .-----------------------------------------------------------------------.
 # |     If running this code we either want to see the results on a Pi or |
@@ -298,16 +324,18 @@ def Move(up=0, down=0, left=0, right=0):
 
 if __name__ == "__main__":
     if DEBUG:
+
         def Hex(n, w):
             s = hex(n)[2:].upper()
             if len(s) < w:
-                s = ("0" * (w-len(s))) + s
+                s = ("0" * (w - len(s))) + s
             return s
 
         def Test(*args):
             print("")
             print(", ".join(args))
             Send(*args)
+
         for n in range(len(keyCodes)):
             if n < 0x20:
                 desc = "\t" + "Ctrl-" + chr(n + ord("A") - 1)
