@@ -4,8 +4,10 @@ from kmk.extensions.rgb import RGB
 from kmk.keys import KC
 from kmk.extensions.media_keys import MediaKeys
 from kb import KMKKeyboard
+
 # pylint: disable=import-error
 import board
+
 # pylint: enable=import-error
 
 keyboard = KMKKeyboard()
@@ -13,7 +15,14 @@ keyboard = KMKKeyboard()
 media = MediaKeys()
 layers_ext = Layers()
 modtap = ModTap()
-rgb_ext = RGB(pixel_pin=board.GP28, num_pixels=12, val_limit=12, hue_default=0, sat_default=100, val_default=20)
+rgb_ext = RGB(
+    pixel_pin=board.GP28,
+    num_pixels=12,
+    val_limit=12,
+    hue_default=0,
+    sat_default=100,
+    val_default=20,
+)
 
 
 keyboard.modules = [layers_ext, modtap]

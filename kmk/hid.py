@@ -230,7 +230,7 @@ class USBHID(AbstractHID):
         reporting_device_const = self.report_device[0]
 
         return self.devices[reporting_device_const].send_report(
-            evt[1: HID_REPORT_SIZES[reporting_device_const] + 1]
+            evt[1 : HID_REPORT_SIZES[reporting_device_const] + 1]
         )
 
 
