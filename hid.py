@@ -49,7 +49,7 @@ except:
     _hid = None
 
 
-DEBUG = False or (_hid == None)
+DEBUG = False or (_hid is None)
 
 MOD_NONE = 0x00
 MOD_LCTRL = 0x01
