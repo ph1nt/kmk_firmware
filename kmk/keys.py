@@ -75,27 +75,14 @@ class KeyAttrDict(AttrDict):
         except Exception:
             pass
 
-        # Basic ASCII letters/numbers don't need anything fancy, so check those
-        # in the laziest way
-        if key in ALL_ALPHAS:
-            make_key(code=4 + ALL_ALPHAS.index(key), names=(key,))
-        elif key in ALL_NUMBERS or key in ALL_NUMBER_ALIASES:
-            try:
-                offset = ALL_NUMBERS.index(key)
-            except ValueError:
-                offset = ALL_NUMBER_ALIASES.index(key)
-
-            names = (ALL_NUMBERS[offset], ALL_NUMBER_ALIASES[offset])
-            make_key(code=30 + offset, names=names)
-
-        # Now try all the other weird special cases to get them out of our way:
-
+        # Try all the other weird special cases to get them out of our way:
+        # This need to be done before or ALPHAS because NO will be parsed as alpha
         # Internal, diagnostic, or auxiliary/enhanced keys
 
         # NO and TRNS are functionally identical in how they (don't) mutate
         # the state, but are tracked semantically separately, so create
         # two keys with the exact same functionality
-        elif key in ('NO', 'XXXXXXX'):
+        if key in ('NO', 'XXXXXXX'):
             make_key(
                 names=('NO', 'XXXXXXX'),
                 on_press=handlers.passthrough,
@@ -107,7 +94,18 @@ class KeyAttrDict(AttrDict):
                 on_press=handlers.passthrough,
                 on_release=handlers.passthrough,
             )
+        # Basic ASCII letters/numbers don't need anything fancy, so check those
+        # in the laziest way
+        elif key in ALL_ALPHAS:
+            make_key(code=4 + ALL_ALPHAS.index(key), names=(key,))
+        elif key in ALL_NUMBERS or key in ALL_NUMBER_ALIASES:
+            try:
+                offset = ALL_NUMBERS.index(key)
+            except ValueError:
+                offset = ALL_NUMBER_ALIASES.index(key)
 
+            names = (ALL_NUMBERS[offset], ALL_NUMBER_ALIASES[offset])
+            make_key(code=30 + offset, names=names)
         elif key in ('RESET',):
             make_key(names=('RESET',), on_press=handlers.reset)
         elif key in ('BOOTLOADER',):
@@ -402,12 +400,8 @@ class Key:
         self.has_modifiers = has_modifiers
         # cast to bool() in case we get a None value
         self.no_press = bool(no_press)
-        self.no_release = bool(no_press)
+        self.no_release = bool(no_release)
 
-        self._pre_press_handlers = []
-        self._post_press_handlers = []
-        self._pre_release_handlers = []
-        self._post_release_handlers = []
         self._handle_press = on_press
         self._handle_release = on_release
         self.meta = meta
@@ -427,26 +421,30 @@ class Key:
         return 'Key(code={}, has_modifiers={})'.format(self.code, self.has_modifiers)
 
     def on_press(self, state, coord_int, coord_raw):
-        for fn in self._pre_press_handlers:
-            if not fn(self, state, KC, coord_int, coord_raw):
-                return None
+        if hasattr(self, '_pre_press_handlers'):
+            for fn in self._pre_press_handlers:
+                if not fn(self, state, KC, coord_int, coord_raw):
+                    return None
 
         ret = self._handle_press(self, state, KC, coord_int, coord_raw)
 
-        for fn in self._post_press_handlers:
-            fn(self, state, KC, coord_int, coord_raw)
+        if hasattr(self, '_post_press_handlers'):
+            for fn in self._post_press_handlers:
+                fn(self, state, KC, coord_int, coord_raw)
 
         return ret
 
     def on_release(self, state, coord_int, coord_raw):
-        for fn in self._pre_release_handlers:
-            if not fn(self, state, KC, coord_int, coord_raw):
-                return None
+        if hasattr(self, '_pre_release_handlers'):
+            for fn in self._pre_release_handlers:
+                if not fn(self, state, KC, coord_int, coord_raw):
+                    return None
 
         ret = self._handle_release(self, state, KC, coord_int, coord_raw)
 
-        for fn in self._post_release_handlers:
-            fn(self, state, KC, coord_int, coord_raw)
+        if hasattr(self, '_post_release_handlers'):
+            for fn in self._post_release_handlers:
+                fn(self, state, KC, coord_int, coord_raw)
 
         return ret
 
@@ -488,6 +486,8 @@ class Key:
         calls of this method will be executed before those provided by later calls.
         '''
 
+        if not hasattr(self, '_pre_press_handlers'):
+            self._pre_press_handlers = []
         self._pre_press_handlers.append(fn)
         return self
 
@@ -511,6 +511,8 @@ class Key:
         calls of this method will be executed before those provided by later calls.
         '''
 
+        if not hasattr(self, '_post_press_handlers'):
+            self._post_press_handlers = []
         self._post_press_handlers.append(fn)
         return self
 
@@ -535,6 +537,8 @@ class Key:
         calls of this method will be executed before those provided by later calls.
         '''
 
+        if not hasattr(self, '_pre_release_handlers'):
+            self._pre_release_handlers = []
         self._pre_release_handlers.append(fn)
         return self
 
@@ -558,6 +562,8 @@ class Key:
         calls of this method will be executed before those provided by later calls.
         '''
 
+        if not hasattr(self, '_post_release_handlers'):
+            self._post_release_handlers = []
         self._post_release_handlers.append(fn)
         return self
 

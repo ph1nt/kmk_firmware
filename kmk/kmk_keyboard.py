@@ -1,7 +1,8 @@
+from supervisor import ticks_ms
+
 from kmk.consts import KMK_RELEASE, UnicodeMode
 from kmk.hid import BLEHID, USBHID, AbstractHID, HIDModes
 from kmk.keys import KC
-from kmk.kmktime import ticks_ms
 from kmk.matrix import MatrixScanner, intify_coordinate
 from kmk.types import TapDanceKeyMeta
 
@@ -42,7 +43,7 @@ class KMKKeyboard:
     secondary_hid_type = None
     _hid_helper = None
     hid_pending = False
-    state_layer_key = None
+    current_key = None
     matrix_update = None
     secondary_matrix_update = None
     _matrix_modify = None
@@ -52,6 +53,7 @@ class KMKKeyboard:
     _trigger_powersave_enable = False
     _trigger_powersave_disable = False
     i2c_deinit_count = 0
+    _go_args = None
 
     # this should almost always be PREpended to, replaces
     # former use of reversed_active_layers which had pointless
@@ -119,7 +121,6 @@ class KMKKeyboard:
             self.state_changed = True
 
     def _find_key_in_map(self, int_coord, row, col):
-        self.state_layer_key = None
         try:
             idx = self.coord_mapping.index(int_coord)
         except ValueError:
@@ -133,31 +134,47 @@ class KMKKeyboard:
             return None
 
         for layer in self.active_layers:
-            self.state_layer_key = self.keymap[layer][idx]
+            try:
+                layer_key = self.keymap[layer][idx]
+            except IndexError:
+                layer_key = None
+                if self.debug_enabled:
+                    print(f'KeymapIndexError(idx={idx}, layer={layer})')
 
-            if not self.state_layer_key or self.state_layer_key == KC.TRNS:
+            if not layer_key or layer_key == KC.TRNS:
                 continue
 
             if self.debug_enabled:
-                print('KeyResolution(key={})'.format(self.state_layer_key))
+                print('KeyResolution(key={})'.format(layer_key))
 
-            return self.state_layer_key
+            return layer_key
 
     def _on_matrix_changed(self, row, col, is_pressed):
         if self.debug_enabled:
             print('MatrixChange(col={} row={} pressed={})'.format(col, row, is_pressed))
 
         int_coord = intify_coordinate(row, col)
-        kc_changed = self._find_key_in_map(int_coord, row, col)
+        if not is_pressed:
+            self.current_key = self._coordkeys_pressed[int_coord]
+            if self.debug_enabled:
+                print('PressedKeyResolution(key={})'.format(self.current_key))
 
-        if kc_changed is None:
+        if self.current_key is None:
+            self.current_key = self._find_key_in_map(int_coord, row, col)
+
+        if is_pressed:
+            self._coordkeys_pressed[int_coord] = self.current_key
+        else:
+            self._coordkeys_pressed[int_coord] = None
+
+        if self.current_key is None:
             print('MatrixUndefinedCoordinate(col={} row={})'.format(col, row))
             return self
 
-        return self.process_key(kc_changed, is_pressed, int_coord, (row, col))
+        return self.process_key(self.current_key, is_pressed, int_coord, (row, col))
 
     def process_key(self, key, is_pressed, coord_int=None, coord_raw=None):
-        if self._tapping and not isinstance(key.meta, TapDanceKeyMeta):
+        if self._tapping and isinstance(key.meta, TapDanceKeyMeta):
             self._process_tap_dance(key, is_pressed)
         else:
             if is_pressed:
@@ -199,43 +216,61 @@ class KMKKeyboard:
                 or not self._tap_dance_counts[changed_key]
             ):
                 self._tap_dance_counts[changed_key] = 1
-                self.set_timeout(
-                    self.tap_time, lambda: self._end_tap_dance(changed_key)
-                )
                 self._tapping = True
             else:
+                self.cancel_timeout(self._tap_timeout)
                 self._tap_dance_counts[changed_key] += 1
 
             if changed_key not in self._tap_side_effects:
                 self._tap_side_effects[changed_key] = None
+
+            self._tap_timeout = self.set_timeout(
+                self.tap_time, lambda: self._end_tap_dance(changed_key, hold=True)
+            )
         else:
+            if not isinstance(changed_key.meta, TapDanceKeyMeta):
+                return self
+
             has_side_effects = self._tap_side_effects[changed_key] is not None
             hit_max_defined_taps = self._tap_dance_counts[changed_key] == len(
-                changed_key.codes
+                changed_key.meta.codes
             )
 
             if has_side_effects or hit_max_defined_taps:
                 self._end_tap_dance(changed_key)
 
+            self.cancel_timeout(self._tap_timeout)
+            self._tap_timeout = self.set_timeout(
+                self.tap_time, lambda: self._end_tap_dance(changed_key)
+            )
+
         return self
 
-    def _end_tap_dance(self, td_key):
+    def _end_tap_dance(self, td_key, hold=False):
         v = self._tap_dance_counts[td_key] - 1
 
-        if v >= 0:
-            if td_key in self.keys_pressed:
-                key_to_press = td_key.codes[v]
-                self.add_key(key_to_press)
-                self._tap_side_effects[td_key] = key_to_press
-                self.hid_pending = True
+        if v < 0:
+            return self
+
+        if td_key in self.keys_pressed:
+            key_to_press = td_key.meta.codes[v]
+            self.add_key(key_to_press)
+            self._tap_side_effects[td_key] = key_to_press
+        elif self._tap_side_effects[td_key]:
+            self.remove_key(self._tap_side_effects[td_key])
+            self._tap_side_effects[td_key] = None
+            self._cleanup_tap_dance(td_key)
+        elif hold is False:
+            if td_key.meta.codes[v] in self.keys_pressed:
+                self.remove_key(td_key.meta.codes[v])
             else:
-                if self._tap_side_effects[td_key]:
-                    self.remove_key(self._tap_side_effects[td_key])
-                    self._tap_side_effects[td_key] = None
-                    self.hid_pending = True
-                else:
-                    self.tap_key(td_key.codes[v])
-                self._cleanup_tap_dance(td_key)
+                self.tap_key(td_key.meta.codes[v])
+            self._cleanup_tap_dance(td_key)
+        else:
+            self.add_key(td_key.meta.codes[v])
+
+        self.hid_pending = True
+
         return self
 
     def _cleanup_tap_dance(self, td_key):
@@ -256,7 +291,7 @@ class KMKKeyboard:
         self._timeouts[timeout_key] = callback
         return timeout_key
 
-    def _cancel_timeout(self, timeout_key):
+    def cancel_timeout(self, timeout_key):
         if timeout_key in self._timeouts:
             del self._timeouts[timeout_key]
 
@@ -322,10 +357,10 @@ class KMKKeyboard:
             self._hid_helper = BLEHID
         else:
             self._hid_helper = AbstractHID
-        self._hid_helper = self._hid_helper()
+        self._hid_helper = self._hid_helper(**self._go_args)
 
     def _init_matrix(self):
-        self.matrix = MatrixScanner(
+        self.matrix = self.matrix_scanner(
             cols=self.col_pins,
             rows=self.row_pins,
             diode_orientation=self.diode_orientation,
@@ -424,6 +459,7 @@ class KMKKeyboard:
                     print('Failed to run post hid function in extension: ', err, ext)
 
     def go(self, hid_type=HIDModes.USB, secondary_hid_type=None, **kwargs):
+        self._go_args = kwargs
         self.hid_type = hid_type
         self.secondary_hid_type = secondary_hid_type
 
@@ -442,13 +478,14 @@ class KMKKeyboard:
                 ext.during_bootup(self)
             except Exception:
                 if self.debug_enabled:
-                    print('Failed to load extention', ext)
+                    print('Failed to load extension', ext)
 
         self._init_matrix()
 
         self._print_debug_cycle(init=True)
 
         while True:
+            self.current_key = None
             self.state_changed = False
             self.sandbox.active_layers = self.active_layers.copy()
 

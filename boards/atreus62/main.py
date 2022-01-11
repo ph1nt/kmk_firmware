@@ -20,28 +20,13 @@ Zoom_out = KC.LCTRL(KC.MINUS)
 _______ = KC.TRNS
 XXXXXXX = KC.NO
 
-#  for use in the encoder extension
-encoder_map = [
-    [
-        (
-            KC.VOLU,
-            KC.VOLD,
-            2,
-        ),  #  Only 1 encoder is being used, so only one tuple per layer is required
-    ],
-    [
-        (Zoom_in, Zoom_out, 1),
-    ],
-    [
-        (_______, _______, 1),  #  no action taken by the encoder on this layer
-    ],
-]
 
 layers_ext = Layers()
 
-encoder_ext = EncoderHandler([board.D40], [board.D41], encoder_map)
-encoder_ext.encoders[0].is_inverted = True
-
+# 1 encoder, no button, inversed = True
+encoder_ext = EncoderHandler(
+    (board.D40, board.D41, None, True),
+)
 keyboard.modules = [layers_ext, encoder_ext]
 
 keyboard.tap_time = 250
@@ -411,6 +396,24 @@ keyboard.keymap = [
         XXXXXXX,
         XXXXXXX,
         XXXXXXX,
+    ],
+]
+
+
+#  for use in the encoder extension
+encoder_map = [
+    [
+        (
+            KC.VOLU,
+            KC.VOLD,
+            None,
+        ),  #  Only 1 encoder is being used, so only one tuple per layer is required
+    ],
+    [
+        (Zoom_in, Zoom_out, None),
+    ],
+    [
+        (_______, _______, None),  #  no action taken by the encoder on this layer
     ],
 ]
 
