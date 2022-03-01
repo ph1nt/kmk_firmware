@@ -47,11 +47,26 @@ total, não por parte separada. Isto seria mais ou menos assim:
 from kmk.matrix import intify_coordinate as ic
 
     coord_mapping = []
-    coord_mapping.extend(ic(0, x) for x in range(12))
-    coord_mapping.extend(ic(1, x) for x in range(12))
-    coord_mapping.extend(ic(2, x) for x in range(12))
+    coord_mapping.extend(ic(0, x, 6) for x in range(6))
+    coord_mapping.extend(ic(4, x, 6) for x in range(6))
+    coord_mapping.extend(ic(1, x, 6) for x in range(6))
+    coord_mapping.extend(ic(5, x, 6) for x in range(6))
+    coord_mapping.extend(ic(2, x, 6) for x in range(6))
+    coord_mapping.extend(ic(6, x, 6) for x in range(6))
     # And now, to handle R3, which at this point is down to just six keys
-    coord_mapping.extend(ic(3, x) for x in range(3, 9))
+    coord_mapping.extend(ic(3, x, 6) for x in range(3, 6))
+    coord_mapping.extend(ic(7, x, 6) for x in range(0, 3))
+```
+
+`intify_coordinate` é a maneira tradicional de gerar posições-chave.
+Aqui está uma versão equivalente, talvez visualmente mais explicativa:
+```python
+coord_mapping = [
+ 0,  1,  2,  3,  4,  5,  24, 25, 26, 27, 28, 29,
+ 6,  7,  8,  9, 10, 11,  30, 31, 32, 33, 34, 35,
+12, 13, 14, 15, 16, 17,  36, 37, 38, 39, 40, 41,
+            21, 22, 23,  42, 43, 44,
+]
 ```
 
 ## Keymaps

@@ -43,7 +43,7 @@ class TapDance(Module):
     def on_powersave_disable(self, keyboard):
         return
 
-    def process_key(self, keyboard, key, is_pressed):
+    def process_key(self, keyboard, key, is_pressed, int_coord):
         if self._tapping and is_pressed and not isinstance(key.meta, TapDanceKeyMeta):
             for k, v in self._tap_dance_counts.items():
                 if v:
@@ -51,7 +51,7 @@ class TapDance(Module):
                     keyboard.hid_pending = True
                     keyboard._send_hid()
                     keyboard.set_timeout(
-                        False, lambda: keyboard.process_key(key, is_pressed, None, None)
+                        False, lambda: keyboard.process_key(key, is_pressed)
                     )
                     return None
 

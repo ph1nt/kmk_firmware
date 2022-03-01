@@ -2,7 +2,6 @@ import board
 
 from kmk.kmk_keyboard import KMKKeyboard as _KMKKeyboard
 from kmk.matrix import DiodeOrientation
-from kmk.matrix import intify_coordinate as ic
 
 
 class KMKKeyboard(_KMKKeyboard):
@@ -20,10 +19,10 @@ class KMKKeyboard(_KMKKeyboard):
     rgb_pixel_pin = board.D0
     i2c = board.I2C
 
-    coord_mapping = []
-    coord_mapping.extend(ic(0, x) for x in range(12))
-    coord_mapping.extend(ic(1, x) for x in range(12))
-    coord_mapping.extend(ic(2, x) for x in range(12))
-
-    # And now, to handle R3, which at this point is down to just six keys
-    coord_mapping.extend(ic(3, x) for x in range(3, 9))
+    # flake8: noqa
+    coord_mapping = [
+     0,  1,  2,  3,  4,  5,  29, 28, 27, 26, 25, 24,
+     6,  7,  8,  9, 10, 11,  35, 34, 33, 32, 31, 30,
+    12, 13, 14, 15, 16, 17,  41, 40, 39, 38, 37, 36,
+                21, 22, 23,  47, 46, 45,
+    ]

@@ -24,10 +24,11 @@ class KMKKeyboard(_KMKKeyboard):
     i2c = board.I2C
     powersave_pin = board.P0_13
 
-    coord_mapping = []
-    coord_mapping.extend(ic(0, x) for x in range(14))
-    coord_mapping.extend(ic(1, x) for x in range(14))
-    coord_mapping.extend(ic(2, x) for x in range(14))
-
-    # And now, to handle R3, which at this point is down to just six keys
-    coord_mapping.extend(ic(3, x) for x in range(3, 12))
+    # NOQA
+    # flake8: noqa
+    coord_mapping = [
+     0,  1,  2,  3,  4,  5,  6,  34, 33, 32, 31, 30, 29, 28,
+     7,  8,  9, 10, 11, 12, 13,  41, 40, 39, 38, 37, 36, 35,
+    14, 15, 16, 17, 18, 19, 20,  48, 47, 46, 45, 44, 43, 42,
+    21, 22, 23, 24, 25, 26,          54, 53, 52, 51, 50, 49,
+    ]

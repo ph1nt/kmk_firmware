@@ -26,7 +26,7 @@ channel below.
 > If you need support with KMK or just want to say hi, find us in
 > [#kmkfw:klar.sh on Matrix](https://matrix.to/#/#kmkfw:klar.sh).  This channel
 > is bridged to Discord
-> [here](https://discordapp.com/widget?id=493256121075761173&theme=dark) for
+> [here](https://discord.gg/QBHUUpeGUd) for
 > convenience.
 
 ## Features
@@ -78,6 +78,13 @@ if inbound code does not adhere to these formatting rules. Some exceptions are
 found in `setup.cfg` loosening the rules in isolated cases, notably
 `user_keymaps` (which is *also* not subject to Black formatting for reasons
 documented in `pyproject.toml`).
+
+## Tests
+
+Unit tests within the `tests` folder mock various CicuitPython modules to allow
+them to be executed in a desktop development environment.
+
+Execute tests using the command `python -m unittest`.
 
 ## License, Copyright, and Legal
 
