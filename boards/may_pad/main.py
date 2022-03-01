@@ -18,12 +18,27 @@ XXXXXXX = KC.NO
 
 keyboard.keymap = [
     [
-        KC.NLCK, KC.PSLS, KC.PAST, KC.PMNS,
-        KC.P7,   KC.P8,   KC.P9,   _______,
-        KC.P4,   KC.P5,   KC.P6,   KC.PPLS,
-        KC.P1,   KC.P2,   KC.P3,   _______,
-        _______, KC.P0, KC.PDOT,   KC.PENT,
-        ]
+        KC.NLCK,
+        KC.PSLS,
+        KC.PAST,
+        KC.PMNS,
+        KC.P7,
+        KC.P8,
+        KC.P9,
+        _______,
+        KC.P4,
+        KC.P5,
+        KC.P6,
+        KC.PPLS,
+        KC.P1,
+        KC.P2,
+        KC.P3,
+        _______,
+        _______,
+        KC.P0,
+        KC.PDOT,
+        KC.PENT,
+    ]
 ]
 
 if __name__ == '__main__':
